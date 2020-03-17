@@ -1,0 +1,16 @@
+Package: ccmotif
+Version: 0.6-11
+Date: 2020-03-05
+Title: Motif Analysis of Circular Codes
+Authors@R: c(
+    person("Markus Gumbel", "Developer", role = c("aut", "cre"),
+           email = "m.gumbel@hs-mannheim.de"))
+Author: Markus Gumbel [aut, cre]
+Maintainer: Markus Gumbel <m.gumbel@hs-mannheim.de>
+Depends: R (>= 3.1.0), seqinr, forcats, dplyr
+Suggests: testthat
+Description: Analyze motifs of circular codes.
+License: Apache License, Version 2.0
+URL: https://www.r-project.org, http://www.gcat.bio
+BugReports: https://pkgname.bugtracker.url
+RoxygenNote: 7.0.2

@@ -1,0 +1,209 @@
+---
+title: "ccmotif Manual"
+author: Markus Gumbel
+output:
+  html_notebook: 
+    fig_width: 7
+    number_sections: yes
+    toc: yes
+  pdf_document: default
+---
+
+```{r include=FALSE}
+library("ccmotif")
+ccmversion = "0.5-x"
+```
+
+
+Mannheim University of Applied Sciences
+
+This tutorial is for *ccmotif* version `r ccmversion`.
+
+# Overview
+
+This document introduces the *ccmotif* (**C**ircular **C**odes **Motif**) package which belongs to a familiy of R packages known as GCAT R packages (Genetic Code Analysis Toolkit). The R package *ccmotif* can be used for the analysis of motif of C3 codes in RNA sequences. More information about GCAT can be found at http://wwww.gcat.bio.
+
+# Installation of package *ccmotif*
+
+**Note**: We are working on a simpler installation procedure - this is work in progress.
+
+The R package abcd requires
+
+ * R (in version 3.1 or higher)
+ * packages `rJava` and `seqinr`
+ * Java virtual machine (Java 8 or higher)
+ 
+We recommend Rstudio as a workbench.
+
+*ccmotif* internally calls Java routines; before the package itself is going to be installed, you need to install `rJava`. Type in the R console:
+```
+install.packages("rJava")
+```
+Next install `seqinr`, the package for accessing genetic sequences and more.
+```
+install.packages("seqinr")
+```
+
+The steps above only need to be done once. Anytime you update the *ccmotif* package these steps are not required anymore.
+
+Finally, we need to prepare the JVM anytime we start a R session, e.g. after launching Rstudio. **Important**: The JVM must be of the same architecture than R itself. If R is 32 bit (x86) you also need a x86 JVM. On the other hand, if R is 64 bit (x64) the JVM has to be a x64 version, too.
+
+Run the following command to indicate R where the JVM is or set `JAVA_HOME` as an environment variable in your operating system. This differs from computer to computer and operating system to operating system. Under windows it looks something like this where `<NUMBER>` indicates a specific JVM version:
+```
+Sys.setenv(JAVA_HOME="C:/Program Files/Java/jdk<NUMBER>")
+```
+Under Mac it is typically:
+```
+Sys.setenv(JAVA_HOME=""/Library/Java/JavaVirtualMachines/jdk<NUMBER>")
+```
+
+Now the *ccmotif* package itself can be installed or updated. You might skip this step if *ccmotif* is up-to-date. We assume that `ccmotif_0.5-0.tar.gz` is the package - certainly there will be other versions in the future. Type:
+```
+install.packages("ccmotif_0.5-0.tar.gz", 
+     INSTALL_opts = "--no-multiarch", # Ignore architecture
+     repos = NULL) # allows us to use a file; no download
+```
+We are almost done. Just type
+```
+library("ccmotif")
+```
+to load the library. You should now be ready to go!
+
+Note that you can browse the manual where each function is described in detail. In RStudio: go to Packages, click on the library *ccmotif*.
+
+# Codons usage
+
+```{r}
+s = "ACUGAGGUCAAGGGGAUGCCCCAU"
+u = codon.usage(codon.split(s))
+u
+```
+
+We read a demo FASTA file with `seqinr`'s `read.fasta` function:
+```{r}
+ff = read.fasta("../data/CCDS_nucleotide.current-short.fna", 
+                as.string = TRUE, 
+                forceDNAtolower = FALSE)
+length(ff)
+```
+
+This FASTA file contains 66 sequences. We count the first one:
+```{r}
+u = codon.usage(codon.split(ff[1]))
+u
+```
+And plot it:
+```{r}
+ggplot(u) + 
+  geom_bar(stat="identity", aes(x = codon, y = freq), 
+           fill = "darkgreen") + 
+  labs(x = "codon", y = "count", 
+       title = "Codon frequencies")
+```
+
+Or for the whole FASTA file (with `codon.barplot`):
+```{r}
+u = codon.usage(codon.splitlist(ff))
+codon.barplot(u, "Species")
+```
+# Codes
+
+## Individual code
+
+An individual code is created by:
+```{r}
+C = codes.code(codons = c("AUC", "GCC"), id = "simple")
+C
+```
+
+## Random codes
+
+An random code is created by:
+```{r}
+R = codes.random(size = "10", id = "rnd")
+R
+```
+
+## C3 codes
+
+`ccmotif` knows also all 216 $C^3$ codes. We pick code number 23 which is the code discovered by Arques and Michel in their first paper 1996:
+
+$C^3_{23} = \{AAC,AAT,ACC,ATC,ATT,CAG,CTC,CTG,GAA,GAC,GAG,GAT,GCC,GGC,GGT,GTA,GTC,GTT,TAC,TTC\}$.
+```{r}
+X = codes.c3[[23]]
+X
+```
+
+We can also use the entire list of C3 codes.
+```{r}
+head(codes.c3, n = 3)
+```
+
+# Code usage
+
+$X$ is the code and $u$ contains the codon usage as calculated above.
+```{r}
+codes.usage(u, X)
+```
+
+Let us use another C3 code:
+```{r}
+codes.usage(u, codes.c3[[90]])
+```
+
+Or a random code:
+```{r}
+codes.usage(u, codes.random(size = 20))
+```
+
+# Motifs
+
+We start with a simple example. Given a sequence $s$ we like to know how long a motif for a given code $C$ is.
+```{r}
+s = "ACUGAGGUCAAGGGGAUGCCCCAU"
+C = codes.code(c("AUG", "GAG"))
+l = ccmotif.lengths(seq = s, code = C)
+l
+```
+There are two motifs (runs), each of size 1, of codons from $X$ and there are three runs (1, 3, 2) of codons which do not belong to $C$.
+
+Now we use $X$:
+```{r}
+s = "ACUGAGGUCAAGGGGAUGCCCCAU"
+l = ccmotif.lengths(seq = s, code = X)
+l
+```
+
+It is also possible to apply the motif length analysis for a FASTA file. Note that a FASTA file can contain a set of sequences. We read a demo FASTA file with `seqinr`'s `read.fasta` function:
+```{r}
+ff = read.fasta("../data/CCDS_nucleotide.current-short.fna", 
+                as.string = TRUE, 
+                forceDNAtolower = FALSE)
+length(ff)
+```
+
+This FASTA file contains 66 short sequences. They together can be analzed with the `ccmotif.length.fasta` command.
+
+```{r}
+
+l = ccmotif.lengths.fasta(ff, X)
+head(l$incode)
+head(l$outcode)
+```
+
+# Scan for motifs with a set of codes
+
+A FASTA file with (many) sequences can be combined with a set of codes (circular or any other set of codons). As this process is quite time consuming, the results are saved to files (found in directory `demo`). The files contain the label within the filename.
+```{r}
+X1 = codes.c3[[1]]
+X2 = codes.c3[[2]]
+Xset = list(X1, X2)
+ccmotif.scan.fasta(ff, label = "demo", codes = Xset)
+```
+
+We can also scan for all known C3 codes.
+```{r}
+ccmotif.scan.fasta(ff[1:5], label = "demo2", codes = codes.c3)
+```
+
+That's it.
