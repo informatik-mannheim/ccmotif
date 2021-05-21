@@ -10,7 +10,8 @@ output:
 ---
 
 ```{r include=FALSE}
-library("ccmotif")
+library(ccmotif)
+library(ggplot2)
 ccmversion = "0.5-x"
 ```
 
@@ -101,10 +102,10 @@ ggplot(u) +
        title = "Codon frequencies")
 ```
 
-Or for the whole FASTA file (with `codon.barplot`):
+Or for the whole FASTA file (with S3 class):
 ```{r}
 u = codon.usage(codon.splitlist(ff))
-codon.barplot(u, "Species")
+plot(u, "Species")
 ```
 # Codes
 
